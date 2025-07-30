@@ -123,16 +123,18 @@ ${Array.from(this._capabilities.keys())
     return {
       unitId: this.props.dna.id,
       capabilities: {
-        // Native cache capabilities - wrapped for unknown[] compatibility
-        get: ((...args: unknown[]) => this.get(args[0] as string)) as (...args: unknown[]) => unknown,
-        set: ((...args: unknown[]) => this.set(args[0] as string, args[1] as unknown, args[2] as number | undefined)) as (...args: unknown[]) => unknown,
-        has: ((...args: unknown[]) => this.has(args[0] as string)) as (...args: unknown[]) => unknown,
-        delete: ((...args: unknown[]) => this.delete(args[0] as string)) as (...args: unknown[]) => unknown,
-        clear: ((...args: unknown[]) => this.clear()) as (...args: unknown[]) => unknown,
-        keys: ((...args: unknown[]) => this.keys(args[0] as string | undefined)) as (...args: unknown[]) => unknown,
-        size: ((...args: unknown[]) => this.size()) as (...args: unknown[]) => unknown,
-        stats: ((...args: unknown[]) => this.stats()) as (...args: unknown[]) => unknown,
-        cleanup: ((...args: unknown[]) => this.cleanup()) as (...args: unknown[]) => unknown,
+        // Simple bind for zero-argument methods (performance optimized)
+        clear: this.clear.bind(this),
+        size: this.size.bind(this),
+        stats: this.stats.bind(this),
+        cleanup: this.cleanup.bind(this),
+        
+        // Args wrapper for methods with parameters (flexible arguments)
+        get: (...args: unknown[]) => this.get(args[0] as string),
+        set: (...args: unknown[]) => this.set(args[0] as string, args[1] as unknown, args[2] as number | undefined),
+        has: (...args: unknown[]) => this.has(args[0] as string),
+        delete: (...args: unknown[]) => this.delete(args[0] as string),
+        keys: (...args: unknown[]) => this.keys(args[0] as string | undefined),
       }
     };
   }

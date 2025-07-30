@@ -93,10 +93,18 @@ describe('Cache Unit Architecture v1.0.6', () => {
       
       // Should not include learned capabilities
       expect(contract.capabilities).not.toHaveProperty('externalSkill');
-      expect(Object.keys(contract.capabilities)).toEqual([
+      
+      // Should have all expected capabilities (order-independent)
+      const expectedCapabilities = [
         'get', 'set', 'has', 'delete', 'clear', 
         'keys', 'size', 'stats', 'cleanup'
-      ]);
+      ];
+      const actualCapabilities = Object.keys(contract.capabilities);
+      
+      expect(actualCapabilities).toHaveLength(expectedCapabilities.length);
+      for (const capability of expectedCapabilities) {
+        expect(actualCapabilities).toContain(capability);
+      }
     });
   });
 
