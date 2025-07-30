@@ -142,8 +142,7 @@ ${Array.from(this._capabilities.keys())
   // ==========================================
 
   /**
-   * Retrieve cached value
-   * Doctrine #20: GRACEFUL DEGRADATION (baseline functionality)
+   * Retrieve cached value 
    */
   get<T = unknown>(key: string): T | null {
     const prefixedKey = this.prefixKey(key);

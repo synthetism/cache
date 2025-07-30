@@ -192,7 +192,7 @@ export class MemoryCache implements ICache {
     
     if (this.evictionPolicy === 'lru') {
       // Find least recently used key
-      let oldestAccessTime = Infinity;
+      let oldestAccessTime = Number.POSITIVE_INFINITY;
       keyToEvict = '';
       
       for (const [key, accessTime] of this.accessOrder.entries()) {
@@ -203,7 +203,7 @@ export class MemoryCache implements ICache {
       }
     } else {
       // FIFO - evict oldest by creation time
-      let oldestTime = Infinity;
+      let oldestTime = Number.POSITIVE_INFINITY;
       keyToEvict = '';
       
       for (const [key, entry] of this.store.entries()) {
@@ -233,13 +233,42 @@ export class MemoryCache implements ICache {
     let totalBytes = 0;
     
     for (const [key, entry] of this.store.entries()) {
-      // Rough estimation: key + JSON serialized value + metadata
+      // Rough estimation: key + serialized value + metadata
       totalBytes += key.length * 2; // UTF-16 chars
-      totalBytes += JSON.stringify(entry.value).length * 2;
+      
+      try {
+        totalBytes += JSON.stringify(entry.value).length * 2;
+      } catch (error) {
+        // Handle circular references or non-serializable values
+        if (error instanceof TypeError && error.message.includes('circular')) {
+          // Rough estimate for circular objects - count properties
+          totalBytes += this.estimateObjectSize(entry.value) * 2;
+        } else {
+          // Fallback for other non-serializable values
+          totalBytes += 100; // Conservative estimate
+        }
+      }
+      
       totalBytes += 64; // Metadata overhead estimate
     }
     
     return totalBytes;
+  }
+
+  private estimateObjectSize(obj: unknown): number {
+    if (obj === null || obj === undefined) return 4;
+    if (typeof obj === 'string') return obj.length;
+    if (typeof obj === 'number' || typeof obj === 'boolean') return 8;
+    if (Array.isArray(obj)) return obj.length * 50; // Rough estimate per item
+    if (typeof obj === 'object') {
+      // Count enumerable properties for rough size estimate
+      try {
+        return Object.keys(obj).length * 50; // Rough estimate per property
+      } catch {
+        return 100; // Fallback
+      }
+    }
+    return 50; // Default estimate
   }
 
   private globToRegex(pattern: string): RegExp {
